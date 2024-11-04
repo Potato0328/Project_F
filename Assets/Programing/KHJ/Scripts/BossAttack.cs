@@ -6,19 +6,47 @@ public class BossAttack : MonoBehaviour
 {
     [SerializeField] List<BossAttackRange> ranges = new();
 
-    [SerializeField] int damage;
+    [SerializeField] protected Transform target;
+    [SerializeField] protected bool isTargeting = false;
+    [SerializeField] protected int damage;
 
-    private void Start()
+    protected void Start()
     {
         // Pull ranges
         for (int i = 0; i < transform.childCount; i++)
         {
             BossAttackRange range = transform.GetChild(i).GetComponent<BossAttackRange>();
+            if (range == null)
+                continue;
+
             range.OnDetected += Attack;
             ranges.Add(range);
         }
 
+        if (target == null)
+            target = GameObject.FindGameObjectWithTag("Player").transform;
         gameObject.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        if (isTargeting)
+        {
+            transform.position = target.position;
+        }
+
+        foreach (Transform child in transform)
+        {
+            child.gameObject.SetActive(true);
+        }
+    }
+
+    private void OnDisable()
+    {
+        foreach (Transform child in transform)
+        {
+            child.gameObject.SetActive(false);
+        }
     }
 
     private void Attack(IDamageable damageable)

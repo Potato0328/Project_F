@@ -32,6 +32,15 @@ public class StatusWindowController : MonoBehaviour
     [SerializeField] private List<Image> relicUIImages;
     private List<Sprite> relicSprites = new List<Sprite>();
 
+    [SerializeField] private TextMeshProUGUI itemNameText;
+    [SerializeField] private TextMeshProUGUI itemDescriptionText;
+    [SerializeField] private Image itemImage;
+    [SerializeField] private Image itemElementImage;
+
+    [SerializeField] private Sprite[] itemElementalImage;
+
+    private Dictionary<Sprite, (string itemName, string itemDescription)> itemInfoDict = new Dictionary<Sprite, (string, string)>();
+
     private void Awake()
     {
         if (Instance == null)
@@ -47,14 +56,14 @@ public class StatusWindowController : MonoBehaviour
 
     private void Start()
     {
-        UIManager.Instance.HideUI("Status Window Explanation Canvas");
-
         UpdateUI();
         UpdateDisplayImage();
 
         foreach (var relicUIImage in relicUIImages)
         {
             relicUIImage.gameObject.SetActive(false);
+
+            relicUIImage.GetComponent<Button>().onClick.AddListener(() => ShowExplanationCanvas());
         }
     }
 
@@ -64,6 +73,11 @@ public class StatusWindowController : MonoBehaviour
         {
             UIManager.Instance.HideUI("Status Window Explanation Canvas");
         }
+    }
+
+    private void ShowExplanationCanvas()
+    {
+        UIManager.Instance.ShowUI("Status Window Explanation Canvas");
     }
 
     private void OnEnable()
@@ -79,40 +93,6 @@ public class StatusWindowController : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         ResetData();
-    }
-
-    public void CollectItem(InGameItemData item)
-    {
-        item.ApplyEffect(this);
-
-        switch (item.elemental)
-        {
-            case ElementalType.Flame:
-                flameCount++;
-                break;
-            case ElementalType.Ice:
-                iceCount++;
-                break;
-            case ElementalType.Electricity:
-                electricityCount++;
-                break;
-            case ElementalType.Earth:
-                earthCount++;
-                break;
-        }
-
-        UpdateUI();
-        UpdateDisplayImage();
-    }
-
-    private void UpdateStatUI(InGameItemData item)
-    {
-        atkText.text = $"{item.ATK}";
-        atsText.text = $"{item.ATS}";
-        defText.text = $"{item.DEF}";
-        hpText.text = $"{item.HP}";
-        ranText.text = $"{item.RAN}";
-        spdText.text = $"{item.SPD}";
     }
 
     public void UpdateStartStatUI(StartItemData item)
@@ -181,32 +161,23 @@ public class StatusWindowController : MonoBehaviour
             displayImage.gameObject.SetActive(true);
         }
 
-        ElementalType manyElement = ElementalType.Flame;
-
         if (maxCount == flameCount)
-            manyElement = ElementalType.Flame;
-        else if (maxCount == iceCount)
-            manyElement = ElementalType.Ice;
-        else if (maxCount == electricityCount)
-            manyElement = ElementalType.Electricity;
-        else if (maxCount == earthCount)
-            manyElement = ElementalType.Earth;
-
-        switch (manyElement)
         {
-            case ElementalType.Flame:
-                displayImage.sprite = elementalImages[0];
-                break;
-            case ElementalType.Ice:
-                displayImage.sprite = elementalImages[1];
-                break;
-            case ElementalType.Electricity:
-                displayImage.sprite = elementalImages[2];
-                break;
-            case ElementalType.Earth:
-                displayImage.sprite = elementalImages[3];
-                break;
+            displayImage.sprite = elementalImages[0];
         }
+        else if (maxCount == iceCount)
+        {
+            displayImage.sprite = elementalImages[1];
+        }
+        else if (maxCount == electricityCount)
+        {
+            displayImage.sprite = elementalImages[2];
+        }
+        else if (maxCount == earthCount)
+        {
+            displayImage.sprite = elementalImages[3];
+        }
+
     }
 
     public void ResetData()
@@ -228,18 +199,86 @@ public class StatusWindowController : MonoBehaviour
         }
     }
 
-    public void AddItemToInventory(Sprite itemSprite)
+    private Dictionary<Image, (string itemName, string itemDescription, Sprite itemSprite, int elemental)> relicInfoDict
+     = new Dictionary<Image, (string, string, Sprite, int)>();
+
+    public void AddItemToInventory(Sprite itemSprite, string itemName, string itemDescription, int elemental)
     {
+        if (!itemInfoDict.ContainsKey(itemSprite))
+        {
+            itemInfoDict[itemSprite] = (itemName, itemDescription);
+        }
+
         foreach (var relicUIImage in relicUIImages)
         {
             if (!relicUIImage.gameObject.activeSelf)
             {
                 relicUIImage.sprite = itemSprite;
                 relicUIImage.gameObject.SetActive(true);
+
+                //relicUIImage와 아이템 데이터를 함께 저장
+                relicInfoDict[relicUIImage] = (itemName, itemDescription, itemSprite, elemental);
+
+                relicUIImage.GetComponent<Button>().onClick.RemoveAllListeners();
+                relicUIImage.GetComponent<Button>().onClick.AddListener(() => ShowExplanationCanvas(relicUIImage));
+
+                switch (elemental)
+                {
+                    case 1:
+                        flameCount++;
+                        break;
+                    case 2:
+                        iceCount++;
+                        break;
+                    case 3:
+                        electricityCount++;
+                        break;
+                    case 4:
+                        earthCount++;
+                        break;
+                }
+
+                UpdateUI();
+                UpdateDisplayImage();
                 break;
             }
         }
     }
 
+    private void ShowExplanationCanvas(Image relicUIImage)
+    {
+        if (relicInfoDict.TryGetValue(relicUIImage, out var itemInfo))
+        {
+            itemNameText.text = itemInfo.itemName;
+            itemDescriptionText.text = itemInfo.itemDescription;
+            itemImage.sprite = itemInfo.itemSprite;
 
+            int elemental = itemInfo.elemental;
+            if (elemental >= 1 && elemental <= itemElementalImage.Length)
+            {
+                itemElementImage.sprite = itemElementalImage[elemental - 1];
+                itemElementImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                itemElementImage.gameObject.SetActive(false);
+            }
+            UIManager.Instance.ShowUI("Status Window Explanation Canvas");
+        }
+    }
+
+    public List<Sprite> GetActiveRelicImages()
+    {
+        List<Sprite> activeRelicImages = new List<Sprite>();
+
+        foreach (var relicUIImage in relicUIImages)
+        {
+            if (relicUIImage.gameObject.activeSelf)
+            {
+                activeRelicImages.Add(relicUIImage.sprite);
+            }
+        }
+
+        return activeRelicImages;
+    }
 }

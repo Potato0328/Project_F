@@ -39,11 +39,22 @@ public class UIManager : MonoBehaviour
         HideUI("In Game Menu Canvas");
         HideUI("Player HP Canvas");
         HideUI("Player Item Canvas");
+        HideUI("Next Stage Canvas");
+        HideUI("Stage Clear Canvas");
+        HideUI("Boss Stage Canvas");
+        HideUI("Boss Stage HP Canvas");
+        HideUI("Game Clear Canvas");
+        HideUI("Game Over Canvas");
 
-        if (SceneManager.GetActiveScene().name == "StageNext")
+        if (SceneManager.GetActiveScene().name == "StageWord")
         {
             ShowUI("Start Item Canvas");
         } 
+
+        //if (SceneManager.GetActiveScene().name == "Stage1")
+        //{
+        //    ShowUI("Start Item Canvas");
+        //}
     }
     private void OnDestroy()
     {
@@ -60,6 +71,27 @@ public class UIManager : MonoBehaviour
         {
             GameObject canvas = uiCanvases[uiName];
             canvas.SetActive(true);
+
+            if (IsUIActive("Status Window Canvas") ||
+                IsUIActive("In Game Menu Canvas") ||
+                IsUIActive("Start Item Canvas") ||
+                IsUIActive("Next Stage Canvas") ||
+                IsUIActive("Boss Stage Canvas") ||
+                IsUIActive("Stage Clear Canvas") ||
+                IsUIActive("Store Canvas") ||
+                IsUIActive("Main Canvas"))
+            {
+                Cursor.lockState = CursorLockMode.None;
+            }
+
+            if (uiName == "Game Over Canvas")
+            {
+                Transform backgroundPanel = canvas.transform.Find("BackgroundPanel");
+                if (backgroundPanel != null)
+                {
+                    backgroundPanel.gameObject.SetActive(true);
+                }
+            }
         }
         else
         {
@@ -76,7 +108,19 @@ public class UIManager : MonoBehaviour
     {
         if (uiCanvases.ContainsKey(uiName))
         {
+            GameObject canvas = uiCanvases[uiName];
             uiCanvases[uiName].SetActive(false);
+
+            Cursor.lockState = CursorLockMode.Locked;
+
+            if (uiName == "Game Over Canvas")
+            {
+                Transform backgroundPanel = canvas.transform.Find("BackgroundPanel");
+                if (backgroundPanel != null)
+                {
+                    backgroundPanel.gameObject.SetActive(false);
+                }
+            }
         }
         else
         {

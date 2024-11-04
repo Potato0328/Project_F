@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static StageManager;
 
 public class InGameController : MonoBehaviour
 {
@@ -22,6 +23,15 @@ public class InGameController : MonoBehaviour
     [Header("Boss Canvas UI")]
     private GameObject bossStageCanvas;
     private Button bossStageMoveButton;
+
+    [Header("Elemental Images")]
+    [SerializeField] public Sprite[] elementalImages;
+
+    [Header("Stage")]
+    [SerializeField] ClearBox clearBox;
+    [SerializeField] Teleport potal;
+    [SerializeField] StageManager stageManager;
+    [SerializeField] InGameManager inGame;
 
 
     private void Start()
@@ -74,6 +84,13 @@ public class InGameController : MonoBehaviour
         {
             bossStageMoveButton.onClick.AddListener(() => StageMove(4));
         }
+
+        if (continueButton != null)
+        {
+            continueButton.interactable = false;
+        }
+
+        inGame = GetComponent<InGameManager>();
     }
 
     private void Update()
@@ -87,17 +104,27 @@ public class InGameController : MonoBehaviour
     /// <summary>
     /// 설명창에서 아이템 정보를 출력
     /// </summary>
-    public void ShowExplanation(string itemName, string description, Sprite itemImage)
+    public void ShowExplanation(string itemName, string description, Sprite itemImage, int elemental)
     {
         explanationCanvas.SetActive(true);
 
         TextMeshProUGUI itemNameText = explanationCanvas.transform.Find("Item Name").GetComponent<TextMeshProUGUI>();
         TextMeshProUGUI descriptionText = explanationCanvas.transform.Find("Description").GetComponent<TextMeshProUGUI>();
         Image itemImageComponent = explanationCanvas.transform.Find("Description Image").GetComponent<Image>();
+        Image itemElementalComponent = explanationCanvas.transform.Find("Item Elemental Image").GetComponent<Image>();
 
         itemNameText.text = itemName;
         descriptionText.text = description;
         itemImageComponent.sprite = itemImage;
+
+        if (elemental >= 1 && elemental <= elementalImages.Length)
+        {
+            itemElementalComponent.sprite = elementalImages[elemental - 1];
+        }
+        else
+        {
+            itemElementalComponent.sprite = null;
+        }
     }
 
     /// <summary>
@@ -132,8 +159,8 @@ public class InGameController : MonoBehaviour
     /// </summary>
     public void NextStageCanvasActive()
     {
-        gameClearCanvas.SetActive(false);
-        nextStageCanvas.SetActive(true);
+        clearBox.IsOpen = true;
+        UIManager.Instance.HideUI("Stage Clear Canvas");
     }
 
     /// <summary>
@@ -145,17 +172,37 @@ public class InGameController : MonoBehaviour
         switch (stageNumber)
         {
             case 1:
+                inGame.RandomStagePoint();
+                stageManager.NextStage(StageState.Battle);
+                UIManager.Instance.HideUI("Next Stage Canvas");
                 Debug.Log("첫 번째 스테이지로 이동합니다.");
                 break;
             case 2:
+                inGame.RandomStagePoint();
+                stageManager.NextStage(StageState.Battle);
+                UIManager.Instance.HideUI("Next Stage Canvas");
                 Debug.Log("두 번째 스테이지로 이동합니다.");
                 break;
             case 3:
+                stageManager.NextStage(StageState.NonBattle);
+                inGame.StoreOrBonfirePosition(inGame.Player.transform, true);
+                UIManager.Instance.HideUI("Next Stage Canvas");
                 Debug.Log("세 번째 스테이지로 이동합니다.");
                 break;
             case 4:
+                inGame.BossStagePosition(inGame.Player.transform);
+                UIManager.Instance.HideUI("Boss Stage Canvas");
+                UIManager.Instance.ShowUI("Boss Stage HP Canvas");
                 Debug.Log("보스 스테이지로 이동합니다.");
                 break;
+        }
+    }
+
+    public void ActivateContinueButton()
+    {
+        if (continueButton != null)
+        {
+            continueButton.interactable = true;
         }
     }
 }
