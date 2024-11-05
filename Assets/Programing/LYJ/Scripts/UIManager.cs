@@ -49,12 +49,7 @@ public class UIManager : MonoBehaviour
         if (SceneManager.GetActiveScene().name == "StageWord")
         {
             ShowUI("Start Item Canvas");
-        } 
-
-        //if (SceneManager.GetActiveScene().name == "Stage1")
-        //{
-        //    ShowUI("Start Item Canvas");
-        //}
+        }
     }
     private void OnDestroy()
     {

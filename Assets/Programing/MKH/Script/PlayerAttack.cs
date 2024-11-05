@@ -6,16 +6,18 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] Transform attackPos;
     [SerializeField] Transform lazerPos;
     [SerializeField] GameObject[] bulletPrefab;
+    [SerializeField] string naming;
     private GameObject curBullet;
     [SerializeField] Animator ani;
     [SerializeField] Transform target;
     [SerializeField] Transform shellTarget;
     [SerializeField] GameObject lazer;
-    [SerializeField] int maxtime;
     [SerializeField] float time;
     [SerializeField] GameObject bombFactory;
-    [SerializeField] int attackDmg;
+    [SerializeField] float attackDmg;
     Player player;
+
+    Coroutine lazers;
 
 
     private Coroutine delayAttackCoroutine;
@@ -35,23 +37,22 @@ public class PlayerAttack : MonoBehaviour
         mover = GetComponent<PlayerMover>();
         player = GetComponent<Player>();
 
-        lazer.GetComponent<Lazer>().Damage("Monster", 1);
+        lazer.GetComponent<Lazer>().Damage(naming, (int)attackDmg);
     }
 
     private void Update()
     {
-        if (mover.isGround && player.curHp > 0)
+        if (mover.isGround)
         {
-            if (mover.isGround)
-            {
-                AnimatorPlay();
 
-                if (Input.GetKeyDown(KeyCode.Mouse0))
-                {
-                    Delay();
-                }
-                Lazer();
+            AnimatorPlay();
+
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                Delay();
             }
+            Lazer();
+
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -102,7 +103,7 @@ public class PlayerAttack : MonoBehaviour
                 checkAniHash = attackHash;
             }
         }
-        
+
 
         if (curAniHash != checkAniHash)
         {
@@ -111,72 +112,61 @@ public class PlayerAttack : MonoBehaviour
         }
     }
 
-    private void Bullet()
-    {
-        
-        if (curBullet == bulletPrefab[0])
-        {
-            GameObject obj = Instantiate(curBullet, attackPos.position, attackPos.rotation);
-            obj.GetComponent<Bullet>().Launch(6, target, attackDmg);
-        }
-
-    }
-
     private void Lazer()
     {
         if (curBullet == bulletPrefab[1])
         {
-            if(Input.GetKey(KeyCode.Mouse0))
+            if (Input.GetKeyDown(KeyCode.Mouse0))
             {
-                StartCoroutine(AttackLazer());
-                gameObject.GetComponent<PlayerMover>().enabled = false;
-                
+                lazers = StartCoroutine(AttackLazer());
+
+                mover.GetComponent<PlayerMover>().enabled = false;
             }
-            else if(Input.GetKeyUp(KeyCode.Mouse0))
+            else if (Input.GetKeyUp(KeyCode.Mouse0))
             {
+                StopCoroutine(lazers);
                 lazer.SetActive(false);
-                gameObject.GetComponent<PlayerMover>().enabled = true;
+                mover.GetComponent<PlayerMover>().enabled = true;
             }
         }
     }
-
-    private void Shell()
-    {
-        if (curBullet == bulletPrefab[2])
-        {
-            GameObject obj = Instantiate(curBullet, attackPos.position, attackPos.rotation);
-        }
-    }
-
-    private void Delay()
-    {
-        StartCoroutine(DelayAttack());
-    }
-
     IEnumerator DelayAttack()
     {
         yield return new WaitForSeconds(0.2f);
 
-        if(curBullet == bulletPrefab[0])
+        if (curBullet == bulletPrefab[0])
         {
             GameObject obj = Instantiate(curBullet, attackPos.position, attackPos.rotation);
-            obj.GetComponent<Bullet>().Launch(6, target, attackDmg);
+            obj.GetComponent<Bullet>().Launch(6, target, (int)attackDmg);
         }
-        else if(curBullet == bulletPrefab[2])
+        else if (curBullet == bulletPrefab[2])
         {
             GameObject obj = Instantiate(curBullet, attackPos.position, attackPos.rotation);
+            obj.GetComponent<Bomb>().Fire(naming, (int)1.5f * (int)attackDmg);
+
+
         }
+    }
+    private void Delay()
+    {
+        StartCoroutine(DelayAttack());
     }
 
     IEnumerator AttackLazer()
     {
         lazer.SetActive(true);
 
-        yield return new WaitForSeconds(time);
+        yield return new WaitForSeconds(5f);
 
         lazer.SetActive(false);
-
-        yield return null;
     }
-    
+
+    //private void OnTriggerEnter(Collider other)
+    //{
+    //    if (other.CompareTag("Monster"))
+    //    {
+    //        Destroy(hitEffect, 4f);
+    //    }
+    //}
+
 }

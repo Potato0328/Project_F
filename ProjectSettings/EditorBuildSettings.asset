@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/Programing/LYJ/GameStart.unity
     guid: 94f48455f44af1d4ca8e0a1b926ed798
   - enabled: 0
-    path: Assets/Programing/LYJ/Stage1.unity
+    path: Assets/Programing/LYJ/StageWord.unity
     guid: 9143807b620ae644da1644fb0fb53a34
   - enabled: 1
     path: Assets/Programing/PJS/Scenes/Game/GameStart.unity
